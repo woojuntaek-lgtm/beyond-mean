@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#151a22">
+<title>평균 너머 돋보기</title>
+<meta name="description" content="평균은 같은데 불량은 60%? — 평균·중앙값·최빈값, 쏠린 분포, 범위·IQR·분산·표준편차와 n−1, 왜도와 첨도를 손으로 체험하는 기술통계 앱">
+<style>
+:root{--bg:#151a22;--card:#1c232e;--card2:#25303d;--fg:#eff3f8;--mut:#a3b0c2;--line:#33425a;
+--a:#7cc4ff;--b:#ff9b5c;--ok:#6fdc9a;--bad:#ff7d7d;--gold:#ffd166;--pur:#b79cff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;line-height:1.55}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding:12px 14px 40px}
+h1{font-size:1.2rem;margin:6px 0}
+h1 small{display:block;font-size:.76rem;color:var(--mut);font-weight:400}
+.tabs{display:flex;gap:5px;margin:10px 0}
+.tabs button{flex:1;padding:9px 2px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:10px;font-size:.84rem;font-weight:600}
+.tabs button.on{background:#24406e;color:#fff;border-color:var(--a)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+h2{font-size:1rem;margin:2px 0 8px}
+.note{font-size:.86rem;color:var(--mut);margin:8px 0 0}
+.note b{color:var(--fg)}
+.btn{padding:11px 14px;border-radius:12px;border:0;background:linear-gradient(135deg,#2f6fd0,#7cc4ff);color:#fff;font-weight:800;font-size:.95rem;flex:1}
+.btn.sec{background:var(--card2);border:1px solid var(--line);color:var(--fg);font-weight:700}
+.btn.sm{flex:none;padding:7px 11px;font-size:.82rem}
+.btn:disabled{opacity:.4}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row+.row{margin-top:8px}
+.pill{padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.84rem}
+.pill.on{border-color:var(--gold);background:#4a3e1a;color:#fff}
+canvas{display:block;width:100%;border-radius:12px;background:#10141b;margin-top:8px}
+.say{background:#16304c;border-left:3px solid var(--a);border-radius:8px;padding:9px 11px;font-size:.92rem;margin-top:10px}
+.say b{color:#fff}
+.say.q{border-left-color:var(--b);background:#2e2118}
+.res{margin-top:10px;font-size:.92rem;border-radius:10px;padding:10px 12px}
+.res.g{background:#16352a;border:1px solid #2f7a52}
+.res.r{background:#3a1d1d;border:1px solid #8a3a3a}
+.res.y{background:#3a3218;border:1px solid #8a7a3a}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px}
+.chips span{background:#24406e;border-radius:8px;padding:4px 10px;font-size:.88rem;font-variant-numeric:tabular-nums}
+.chips span.o{background:#5a2626;font-weight:800}
+.sl{display:grid;grid-template-columns:84px 1fr 56px;gap:8px;align-items:center;font-size:.86rem;margin-top:8px}
+.sl input{width:100%}
+.sl b{text-align:right;font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+.stats.s4{grid-template-columns:repeat(4,1fr)}
+.stats div{background:var(--card2);border-radius:10px;padding:7px 4px;text-align:center;font-size:.74rem;color:var(--mut)}
+.stats div b{display:block;font-size:1rem;color:var(--fg);font-variant-numeric:tabular-nums}
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.opts button{text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.9rem}
+.opts button.right{border-color:#6fdc9a;background:#16352a}
+.opts button.wrong{border-color:#ff7d7d;background:#3a1d1d}
+table.dt{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:8px;font-variant-numeric:tabular-nums}
+table.dt th,table.dt td{padding:5px 4px;border-bottom:1px solid var(--line);text-align:center}
+table.dt th{color:var(--mut);font-weight:600}
+table.dt td.hl{color:#ffd166;font-weight:800}
+table.dt tr.sum td{border-top:2px solid var(--line);font-weight:800}
+.bars{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.bars .d{display:grid;grid-template-columns:96px 1fr 64px;gap:8px;align-items:center;font-size:.84rem}
+.bars .bar{height:16px;border-radius:8px;transition:width .5s}
+.bars .d b{text-align:right;font-variant-numeric:tabular-nums}
+.sum3{margin-top:12px;background:linear-gradient(135deg,#1d3358,#3a2a5a);border-radius:14px;padding:12px 14px}
+.sum3 ol{margin:4px 0;padding-left:20px;font-size:.92rem}
+.mine{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.mine div{display:flex;justify-content:space-between;gap:8px;background:var(--card2);border-radius:10px;padding:8px 10px;font-size:.88rem}
+.mine button{border:0;background:none;color:var(--mut);font-size:.9rem}
+input[type=text]{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#10141b;color:var(--fg);font-size:.92rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:999px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.on{opacity:1}
+footer{text-align:center;color:var(--mut);font-size:.78rem;margin-top:18px}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🔎 평균 너머 돋보기<small>평균은 같은데 불량은 60%? — 중심·퍼짐·모양</small></h1>
+<div class="tabs">
+  <button class="on" data-tab="t1">① 중심</button>
+  <button data-tab="t2">② 쏠림</button>
+  <button data-tab="t3">③ 퍼짐</button>
+  <button data-tab="t4">④ 꼬리</button>
+</div>
+
+<!-- ① -->
+<section id="tab-t1">
+  <div class="card">
+    <h2>🍪 평균이 같은 두 생산 라인</h2>
+    <p class="note" style="margin-top:0">과자 봉지 무게 평균은 둘 다 <b>100 g</b>. 기준은 <b>95 ~ 105 g</b>. 각 라인에서 1,000봉지씩 만들어 봅니다.</p>
+    <canvas id="cvL"></canvas>
+    <div class="row" style="margin-top:8px"><button class="btn" id="lnGo">🎲 1,000봉지씩 다시 생산</button></div>
+    <table class="dt" id="lnT"></table>
+    <div id="lnMsg"></div>
+  </div>
+  <div class="card">
+    <h2>⚖️ 평균 vs 중앙값 — 값 하나가 바뀌면</h2>
+    <p class="note" style="margin-top:0">10, 20, 30, 40, <b>?</b> — 마지막 값을 키워 보세요. 평균은 모든 값을 똑같이 반영하고, 중앙값은 <b>순서만</b> 봅니다.</p>
+    <div class="chips" id="mChips"></div>
+    <div class="sl"><span>마지막 값</span><input type="range" id="mLast" min="50" max="900" step="10" value="50"><b id="mLastV"></b></div>
+    <canvas id="cvM"></canvas>
+    <div class="stats"><div>평균<b id="mMean"></b></div><div>중앙값<b id="mMed"></b></div><div>개수<b>5</b></div></div>
+    <div id="mMsg"></div>
+  </div>
+  <div class="card">
+    <h2>❓ 퀴즈 ① 중앙값은</h2>
+    <div class="say q">데이터 <b class="mono">3, 7, 8, 12, 40, 50</b>의 중앙값은?</div>
+    <div class="opts" id="q1"><button data-a="10">10</button><button data-a="20">20</button><button data-a="8">8</button></div>
+    <div id="q1Msg"></div>
+  </div>
+  <div class="card">
+    <h2>👕 가장 흔한 값, 최빈값</h2>
+    <p class="note" style="margin-top:0">숫자가 아닌 <b>범주 데이터</b>에서 쓸 수 있는 유일한 대표값. 오늘 팔린 티셔츠 사이즈를 눌러 보세요.</p>
+    <div class="row" id="szBtns"></div>
+    <canvas id="cvZ"></canvas>
+    <div id="zMsg"></div>
+  </div>
+</section>
+
+<!-- ② -->
+<section id="tab-t2" hidden>
+  <div class="card">
+    <h2>💰 쏠린 데이터에서 세 값의 순서</h2>
+    <p class="note" style="margin-top:0">연봉처럼 대부분 가운데 모이고 소수가 아주 높은 <b>모의 데이터 10만 명</b>(만 원). 꼬리 길이와 방향을 바꿔 보세요.</p>
+    <div class="row"><button class="pill on" data-sk="r">➡️ 오른쪽 꼬리</button><button class="pill" data-sk="s">⚖️ 대칭</button><button class="pill" data-sk="l">⬅️ 왼쪽 꼬리</button></div>
+    <div class="sl"><span>꼬리 길이</span><input type="range" id="sg" min="1" max="9" value="6"><b id="sgV"></b></div>
+    <canvas id="cvH"></canvas>
+    <div class="stats s4"><div><span style="color:#b79cff">●</span> 최빈 구간<b id="hMo"></b></div><div><span style="color:#6fdc9a">●</span> 중앙값<b id="hMd"></b></div><div><span style="color:#ff9b5c">●</span> 평균<b id="hMn"></b></div><div>왜도<b id="hSk"></b></div></div>
+    <div id="hMsg"></div>
+  </div>
+  <div class="card">
+    <h2>❓ 퀴즈 ② 아파트 가격</h2>
+    <div class="say q">한 도시의 아파트 가격은 대부분 비슷하고, 일부 <b>초고가 아파트</b>가 오른쪽 꼬리를 길게 만듭니다. 평균과 중앙값의 관계는?</div>
+    <div class="opts" id="q2"><button data-a="mean">평균이 더 크다</button><button data-a="med">중앙값이 더 크다</button><button data-a="eq">같다</button></div>
+    <div id="q2Msg"></div>
+  </div>
+  <div class="card">
+    <h2>📐 모양 하나 — 왜도(기울기)</h2>
+    <table class="dt"><tr><th>모양</th><th>왜도</th><th>세 값의 순서</th><th>예</th></tr>
+      <tr><td>오른쪽 꼬리 ➡️</td><td>양수</td><td>최빈 &lt; 중앙 &lt; 평균</td><td>연봉, 가구 자산, 회사 매출</td></tr>
+      <tr><td>대칭 ⚖️</td><td>0</td><td>셋이 같음</td><td>키, 측정 오차</td></tr>
+      <tr><td>왼쪽 꼬리 ⬅️</td><td>음수</td><td>평균 &lt; 중앙 &lt; 최빈</td><td>대부분 오래가고 일부만 일찍 고장 나는 기계 수명</td></tr></table>
+    <p class="note">평균과 중앙값의 차이로도 쏠림을 짐작할 수 있습니다.</p>
+  </div>
+</section>
+
+<!-- ③ -->
+<section id="tab-t3" hidden>
+  <div class="card">
+    <h2>📏 범위 vs 사분위 범위(IQR)</h2>
+    <div class="row"><button class="pill on" data-rg="50">10, 20, 30, 40, 50</button><button class="pill" data-rg="900">10, 20, 30, 40, 900</button></div>
+    <canvas id="cvR"></canvas>
+    <div class="stats"><div>범위 (최대−최소)<b id="rR"></b></div><div>IQR (Q3−Q1)<b id="rI"></b></div><div>Q1 · Q3<b id="rQ"></b></div></div>
+    <div id="rMsg"></div>
+  </div>
+  <div class="card">
+    <h2>🧮 분산 — 편차를 제곱해서 평균</h2>
+    <p class="note" style="margin-top:0">편차(값 − 평균)를 그냥 더하면 <b>언제나 0</b> — 위아래가 정확히 상쇄됩니다. 그래서 제곱해 부호를 없앤 뒤 평균을 냅니다. 숫자를 바꿔 보세요.</p>
+    <div class="row" id="vIn"></div>
+    <table class="dt" id="vT"></table>
+    <div class="stats"><div>÷ n (모분산)<b id="vN"></b></div><div>÷ (n−1) (표본분산)<b id="vN1"></b></div><div>표준편차 √(n−1식)<b id="vSd"></b></div></div>
+  </div>
+  <div class="card">
+    <h2>🎯 왜 n−1로 나눌까 — 10만 번 실험</h2>
+    <p class="note" style="margin-top:0">분산이 <b>1</b>인 집단에서 5개씩 뽑아 분산을 계산하기를 10만 번. 진짜 값 1을 맞히는 쪽은?</p>
+    <div class="row" style="margin-top:8px"><button class="btn" id="n1Go">▶ 10만 번 뽑기</button></div>
+    <div class="bars" id="n1Bars"></div>
+    <div id="n1Msg"></div>
+  </div>
+  <div class="card">
+    <h2>🏭 첫 장면의 비밀 — 표준편차</h2>
+    <p class="note" style="margin-top:0">분산은 단위가 g²라 읽기 불편 → 제곱근을 씌운 <b>표준편차</b>는 원래 단위(g). 기준 ±5 g이 표준편차 몇 개인지가 관건!</p>
+    <div class="sl"><span>표준편차 σ</span><input type="range" id="sdS" min="0.5" max="12" step="0.5" value="10"><b id="sdV"></b></div>
+    <canvas id="cvN"></canvas>
+    <div class="stats"><div>기준 ±5 g =<b id="nK"></b></div><div>벗어날 확률<b id="nP"></b></div><div>1,000봉지 중<b id="nC"></b></div></div>
+    <div id="nMsg"></div>
+  </div>
+</section>
+
+<!-- ④ -->
+<section id="tab-t4" hidden>
+  <div class="card">
+    <h2>🌪️ 모양 둘 — 첨도는 꼬리의 무게</h2>
+    <p class="note" style="margin-top:0">봉우리가 뾰족한지가 아니라, <b>극단값이 얼마나 자주 나오는지</b>를 잽니다. 표준편차가 같은 두 분포(정규분포 vs 꼬리가 두꺼운 분포)로 100만 개씩!</p>
+    <div class="row" style="margin-top:8px"><button class="btn" id="kuGo">▶ 100만 개씩 만들기</button></div>
+    <canvas id="cvK"></canvas>
+    <table class="dt" id="kuT"></table>
+    <div id="kuMsg"></div>
+  </div>
+  <div class="card">
+    <h2>🐼 한 줄로 보는 요약표 — describe()</h2>
+    <div class="code mono" style="background:#0f131a;border:1px solid #26324a;border-radius:10px;padding:9px 11px;font-size:.8rem;margin-top:0;white-space:pre;overflow-x:auto">df.<span style="color:#7cc4ff">describe</span>()</div>
+    <table class="dt" id="dsT"></table>
+    <div class="row" style="margin-top:8px"><button class="btn sec sm" id="dsGo">🎲 다시 생산</button></div>
+    <div id="dsMsg"></div>
+  </div>
+  <div class="card">
+    <h2>📌 세 줄 정리</h2>
+    <div class="sum3"><ol>
+      <li>평균은 이상치에 약하니 <b>중앙값</b>을 함께 보고, 둘의 차이로 <b>쏠림</b>을 읽는다.</li>
+      <li>퍼짐은 <b>사분위 범위와 표준편차</b>로 재며, 표본 분산은 <b>n−1</b>로 나눈다.</li>
+      <li><b>왜도</b>는 기울기, <b>첨도</b>는 꼬리의 무게를 알려 준다.</li>
+    </ol></div>
+  </div>
+  <div class="card">
+    <h2>🤔 생각해 볼 질문</h2>
+    <p class="note" style="margin-top:0">뉴스나 보고서에서 <b>평균 하나만</b> 제시된 숫자를 본 적이 있나요? 그 데이터의 중앙값과 표준편차는 어땠을지 상상해 적어 보세요. 숫자 하나 뒤에 숨은 분포를 상상하는 습관이 데이터 분석의 시작입니다. (이 기기에만 저장)</p>
+    <div class="row" style="margin-top:8px"><input type="text" id="myIn" maxlength="60" placeholder="예: 평균 연봉 — 중앙값은 훨씬 낮을 듯"><button class="btn sm" id="myAdd">추가</button></div>
+    <div class="mine" id="mine"></div>
+  </div>
+</section>
+
+<footer>© 2026 정필 수심명 · <a href="https://blog.naver.com/omyman" target="_blank" rel="noopener">blog.naver.com/omyman</a><br>빅데이터 05 부록 · 인터넷 없이 동작</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('on'),1800);}
+const vib=n=>{try{navigator.vibrate&&navigator.vibrate(n);}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function prep(cv,ratio){const dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth||320,h=Math.round(w*ratio);
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return{c,w,h};}
+function T(c,s,x,y,col,size,al,bl,wt){c.fillStyle=col;c.font=`${wt||''} ${size||12}px -apple-system,"Malgun Gothic",sans-serif`;c.textAlign=al||'center';c.textBaseline=bl||'middle';c.fillText(s,x,y);}
+const nf=(v,d)=>{d=d===undefined?2:d;const r=Math.round(v*10**d)/10**d;return (Object.is(r,-0)?0:r).toLocaleString(undefined,{maximumFractionDigits:d}).replace(/^-/,'−');};
+function rng(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function gaussF(R){let sp=null;return()=>{if(sp!==null){const v=sp;sp=null;return v;}let u=0,v=0,s=0;do{u=R()*2-1;v=R()*2-1;s=u*u+v*v;}while(s>=1||s===0);const m=Math.sqrt(-2*Math.log(s)/s);sp=v*m;return u*m;};}
+const mean=a=>a.reduce((s,v)=>s+v,0)/a.length;
+const qnt=(a,q)=>{const s=Float64Array.from(a).sort(),p=(s.length-1)*q,lo=Math.floor(p),hi=Math.ceil(p);return s[lo]+(s[hi]-s[lo])*(p-lo);};
+const sdS=a=>{const m=mean(a);return Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1));};
+function erfc(x){const z=Math.abs(x),t=1/(1+0.5*z);const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));return x>=0?r:2-r;}
+function single(sel,attr,fn){$$(sel).forEach(b=>b.onclick=()=>{$$(sel).forEach(x=>x.classList.toggle('on',x===b));fn(b.dataset[attr]);});}
+function quiz(id,ans,fn){$$(`#${id} button`).forEach(b=>b.onclick=()=>{const ok=b.dataset.a===ans;$$(`#${id} button`).forEach(x=>x.className=x.dataset.a===ans?'right':x===b?'wrong':'');vib(ok?[30,40,60]:80);$(`#${id}Msg`).innerHTML=fn(ok);});}
+function hist(c,w,h,data,lo,hi,nb,col,opt){opt=opt||{};const L=opt.L||10,R=w-(opt.R||10),top=opt.top||14,bot=h-(opt.bot||22),bw=(hi-lo)/nb,cnt=new Array(nb).fill(0);data.forEach(v=>{const k=Math.floor((v-lo)/bw);if(k>=0&&k<nb)cnt[k]++;});const mx=opt.max||Math.max(...cnt);const X=v=>L+(v-lo)/(hi-lo)*(R-L);
+  cnt.forEach((n,k)=>{const x0=X(lo+k*bw),x1=X(lo+(k+1)*bw),hh=n/mx*(bot-top);c.fillStyle=typeof col==='function'?col(lo+(k+0.5)*bw):col;c.fillRect(x0,bot-hh,Math.max(1,x1-x0-0.5),hh);});return{X,cnt,bot,top,mx};}
+
+/* ===== ① 두 라인 ===== */
+let LN=null;
+function lnMake(){const g=gaussF(rng(Math.floor(Math.random()*1e9)));LN=[Array.from({length:1000},()=>100+1*g()),Array.from({length:1000},()=>100+10*g())];}
+function lnDraw(){const {c,w,h}=prep($('#cvL'),0.62);c.clearRect(0,0,w,h);const half=(h-10)/2;const lo=60,hi=140;
+  [[0,'1번 라인 σ ≈ 1 g','#6fdc9a'],[1,'2번 라인 σ ≈ 10 g','#ff9b5c']].forEach(([i,lab,col])=>{c.save();c.translate(0,i*(half+6));const H=half;
+    const L=10,R=w-10,X=v=>L+(v-lo)/(hi-lo)*(R-L);c.fillStyle='rgba(111,220,154,.08)';c.fillRect(X(95),6,X(105)-X(95),H-22);
+    const r=hist(c,w,H,LN[i],lo,hi,80,v=>v<95||v>105?'#ff7d7d':col,{top:16,bot:18,max:i===0?400:60});
+    c.strokeStyle='#ffd166';c.setLineDash([3,3]);c.beginPath();c.moveTo(X(100),8);c.lineTo(X(100),H-18);c.stroke();c.setLineDash([]);
+    T(c,lab,L+4,10,col,11,'left','middle','700');[70,95,100,105,130].forEach(t=>T(c,t+'',X(t),H-8,t===95||t===105?'#6fdc9a':'#55667f',9.5));c.restore();});
+  const row=(i)=>{const a=LN[i],bad=a.filter(v=>v<95||v>105).length;return`<td>${nf(mean(a),1)}</td><td>${nf(sdS(a),1)}</td><td>${nf(Math.min(...a),1)}</td><td class="${bad>100?'hl':''}">${bad}</td>`;};
+  $('#lnT').innerHTML=`<tr><th>라인</th><th>평균</th><th>표준편차</th><th>최솟값</th><th>불량(봉)</th></tr><tr><td>1번</td>${row(0)}</tr><tr><td>2번</td>${row(1)}</tr>`;
+  $('#lnMsg').innerHTML=`<div class="say">평균은 둘 다 거의 100인데, 2번 라인은 1,000봉지 중 <b>${LN[1].filter(v=>v<95||v>105).length}봉지</b>(빨간 막대)가 기준을 벗어났습니다. 평균 하나로는 보이지 않는 것 — 비밀은 ③ 탭의 <b>표준편차</b>에서.</div>`;}
+$('#lnGo').onclick=()=>{lnMake();lnDraw();vib(15);};
+/* 평균 vs 중앙값 */
+function mDraw(){const last=+$('#mLast').value,a=[10,20,30,40,last];$('#mLastV').textContent=last;const m=mean(a),md=30;
+  $('#mChips').innerHTML=a.map((v,i)=>`<span class="${i===4&&last>50?'o':''}">${v}</span>`).join('');$('#mMean').textContent=nf(m,1);$('#mMed').textContent=md;
+  const {c,w,h}=prep($('#cvM'),0.3);c.clearRect(0,0,w,h);const L=14,R=w-14,X=v=>L+v/920*(R-L),y=h*0.5;c.strokeStyle='#33425a';c.lineWidth=1.5;c.beginPath();c.moveTo(L,y);c.lineTo(R,y);c.stroke();
+  [0,300,600,900].forEach(t=>T(c,t+'',X(t),y+30,'#55667f',9.5));a.forEach(v=>{c.beginPath();c.arc(X(v),y,5,0,7);c.fillStyle='#7cc4ff';c.fill();});
+  [[m,'평균 '+nf(m,0),'#ff9b5c',-20],[md,'중앙값 30','#6fdc9a',18]].forEach(([v,l,col,dy])=>{c.strokeStyle=col;c.lineWidth=2.5;c.beginPath();c.moveTo(X(v),y-14);c.lineTo(X(v),y+14);c.stroke();T(c,l,X(v)+(dy<0?0:4),y+dy,col,11,dy<0?'center':'left','middle','700');});
+  $('#mMsg').innerHTML=last>50?`<div class="res r">다섯 값 중 네 개가 40 이하인데 평균은 <b>${nf(m,0)}</b>! 평균은 <b>이상치에 아주 약합니다</b>. 중앙값은 순서만 보니 <b>30 그대로</b> — 극단값이 있을 때 든든한 대표값.</div>`:'<div class="say">평균 30, 중앙값 30. 마지막 값을 900까지 올려 보세요.</div>';}
+$('#mLast').addEventListener('input',mDraw);
+quiz('q1','10',ok=>`<div class="res ${ok?'g':'r'}">${ok?'🎉 정답!':'아쉽네요.'} 값이 6개(짝수)라 가운데 두 값 8과 12의 평균 = <b>10</b>. 참고로 평균은 <b>20</b> — 큰 값 40과 50이 끌어올려 중앙값의 두 배가 됐습니다. 평균과 중앙값이 많이 다르면 <b>한쪽으로 쏠렸다는 신호</b>.</div>`);
+/* 최빈값 */
+const SZ=['S','M','L','XL'];let szc={S:3,M:7,L:5,XL:2};
+function zDraw(){$('#szBtns').innerHTML=SZ.map(s=>`<button class="btn sec sm" data-z="${s}">+ ${s}</button>`).join('')+'<button class="btn sec sm" id="zRe">↺</button>';
+  $$('[data-z]').forEach(b=>b.onclick=()=>{szc[b.dataset.z]++;vib(10);zDraw();});$('#zRe').onclick=()=>{szc={S:3,M:7,L:5,XL:2};zDraw();};
+  const {c,w,h}=prep($('#cvZ'),0.38);c.clearRect(0,0,w,h);const mx=Math.max(...Object.values(szc)),modes=SZ.filter(s=>szc[s]===mx);const bw=(w-40)/4;
+  SZ.forEach((s,i)=>{const hh=szc[s]/Math.max(mx,1)*(h-50);const x=20+i*bw+bw*0.15;c.fillStyle=modes.includes(s)?'#b79cff':'#24406e';c.fillRect(x,h-24-hh,bw*0.7,hh);T(c,s,x+bw*0.35,h-11,'#a3b0c2',12,'center','middle','700');T(c,szc[s]+'벌',x+bw*0.35,h-32-hh,'#eff3f8',11);});
+  $('#zMsg').innerHTML=modes.length>1?`<div class="res y">최빈값이 <b>${modes.join(', ')}</b> ${modes.length}개! 가장 많이 나온 값이 여러 개일 수 있습니다. 모든 값이 한 번씩만 나오면 아예 없을 수도 — 그래서 키·무게 같은 연속 숫자에서는 잘 쓰지 않습니다.</div>`:`<div class="say">최빈값 = <b>${modes[0]}</b>. "평균 사이즈"는 계산할 수 없지만 "가장 많이 팔린 사이즈"는 말할 수 있죠. 다른 사이즈를 눌러 동률을 만들어 보세요.</div>`;}
+
+/* ===== ② 쏠림 ===== */
+let skM='r',HD=null;
+function hMake(){const s=+$('#sg').value/10,g=gaussF(rng(0));$('#sgV').textContent='σ '+s.toFixed(1);const N=100000;const a=new Float64Array(N);
+  for(let i=0;i<N;i++){const z=g();a[i]=skM==='r'?Math.exp(8+s*z):skM==='l'?12000-Math.exp(8+s*z):3000+1800*s*z;}
+  HD=a;}
+function hDraw(){const a=HD,N=a.length;const m=mean(a),md=qnt(a,.5);let lo,hi;if(skM==='r'){lo=0;hi=12000;}else if(skM==='l'){lo=0;hi=12000;}else{lo=3000-4*1800*(+$('#sg').value/10)-200;hi=3000+4*1800*(+$('#sg').value/10)+200;}
+  const nb=120,bw=(hi-lo)/nb,cnt=new Array(nb).fill(0);for(let i=0;i<N;i++){const k=Math.floor((a[i]-lo)/bw);if(k>=0&&k<nb)cnt[k]++;}const nb2=skM==='s'?31:60,bw2=(hi-lo)/nb2,c2=new Array(nb2).fill(0);for(let i=0;i<N;i++){const k=Math.floor((a[i]-lo)/bw2);if(k>=0&&k<nb2)c2[k]++;}let mk=0;c2.forEach((n,k)=>{if(n>c2[mk])mk=k;});const mo=lo+(mk+0.5)*bw2;
+  const sd=Math.sqrt(a.reduce((s,v)=>s+(v-m)**2,0)/N),sk=a.reduce((s,v)=>s+((v-m)/sd)**3,0)/N;
+  const {c,w,h}=prep($('#cvH'),0.55);c.clearRect(0,0,w,h);const L=10,R=w-10,top=30,bot=h-24,X=v=>L+(v-lo)/(hi-lo)*(R-L),mx=Math.max(...cnt);
+  cnt.forEach((n,k)=>{const hh=n/mx*(bot-top);c.fillStyle='#24406e';c.fillRect(X(lo+k*bw),bot-hh,Math.max(1,X(lo+(k+1)*bw)-X(lo+k*bw)-0.4),hh);});
+  const lines=[[mo,'최빈','#b79cff'],[md,'중앙','#6fdc9a'],[m,'평균','#ff9b5c']];const order=[...lines].sort((p,q)=>p[0]-q[0]);
+  lines.forEach(([v,l,col])=>{c.strokeStyle=col;c.lineWidth=2.5;c.beginPath();c.moveTo(X(v),top-4);c.lineTo(X(v),bot);c.stroke();});
+  order.forEach(([v,l,col],i)=>T(c,l,X(v)+(i-1)*16,top-14,col,11,'center','middle','800'));
+  [lo,(lo+hi)/2,hi].forEach(t=>T(c,Math.round(t).toLocaleString(),X(t),bot+12,'#55667f',9.5,t===lo?'left':t===hi?'right':'center'));
+  $('#hMo').textContent=Math.round(mo).toLocaleString();$('#hMd').textContent=Math.round(md).toLocaleString();$('#hMn').textContent=Math.round(m).toLocaleString();$('#hSk').textContent=nf(sk,2);
+  $('#hMsg').innerHTML=skM==='r'?`<div class="res y">오른쪽으로 긴 꼬리 → 평균이 꼬리 쪽으로 끌려가 <b>최빈 &lt; 중앙 &lt; 평균</b>, 왜도 <b>양수</b>. "평균 연봉"이라는 말을 들으면 실제 보통 사람보다 높게 느끼는 이유! <span style="color:#a3b0c2">(꼬리 길이 σ 0.6이 원고의 예: 최빈 약 2,160 · 중앙 약 2,980 · 평균 약 3,570, 왜도 약 2.3)</span></div>`:skM==='l'?'<div class="res y">왼쪽으로 긴 꼬리 → 순서가 뒤집혀 <b>평균 &lt; 중앙 &lt; 최빈</b>, 왜도 <b>음수</b>.</div>':'<div class="res g">좌우 대칭 → 세 값이 <b>거의 같고</b>, 왜도는 <b>0</b> 근처.</div>';}
+function hAll(){hMake();hDraw();}
+single('[data-sk]','sk',m=>{skM=m;hAll();vib(10);});$('#sg').addEventListener('input',hAll);
+quiz('q2','mean',ok=>`<div class="res ${ok?'g':'r'}">${ok?'🎉 정답!':'아쉽네요.'} <b>평균이 더 크다</b>. 초고가 아파트가 평균을 꼬리 쪽으로 끌어올립니다. 그래서 부동산 통계에서는 평균과 함께 <b>중앙값(중위 가격)</b>을 발표하는 경우가 많아요.</div>`);
+
+/* ===== ③ 퍼짐 ===== */
+let rg='50';
+function rDraw(){const a=[10,20,30,40,rg==='900'?900:50];const q1=qnt(a,.25),q3=qnt(a,.75);$('#rR').textContent=Math.max(...a)-Math.min(...a);$('#rI').textContent=q3-q1;$('#rQ').textContent=`${q1} · ${q3}`;
+  const {c,w,h}=prep($('#cvR'),0.32);c.clearRect(0,0,w,h);const L=14,R=w-14,mxv=rg==='900'?920:60,X=v=>L+v/mxv*(R-L),y=h*0.42;
+  c.fillStyle='rgba(124,196,255,.25)';c.fillRect(X(q1),y-14,X(q3)-X(q1),28);c.strokeStyle='#7cc4ff';c.strokeRect(X(q1),y-14,X(q3)-X(q1),28);T(c,'IQR',(X(q1)+X(q3))/2,y-22,'#7cc4ff',10.5,'center','middle','700');
+  c.strokeStyle='#ff9b5c';c.lineWidth=2;c.beginPath();c.moveTo(X(Math.min(...a)),y+24);c.lineTo(X(Math.max(...a)),y+24);c.stroke();T(c,'범위',X(Math.max(...a))-4,y+34,'#ff9b5c',10.5,'right');
+  a.forEach(v=>{c.beginPath();c.arc(X(v),y,5,0,7);c.fillStyle=v===900?'#ff7d7d':'#eff3f8';c.fill();});
+  $('#rMsg').innerHTML=rg==='900'?'<div class="res r">범위 <b>890</b> — 값 하나에 크게 흔들립니다. IQR은 양 끝 ¼씩을 잘라 내고 <b>가운데 절반의 폭</b>만 보니 900이 있어도 <b>20 그대로</b>. 이상치를 찾을 때 썼던 바로 그 IQR!</div>':'<div class="say">범위 40, IQR 20. 900으로 바꿔 보세요.</div>';}
+single('[data-rg]','rg',v=>{rg=v;rDraw();vib(10);});
+let VV=[2,4,6,8,10];
+function vDraw(){$('#vIn').innerHTML=VV.map((v,i)=>`<input type="number" value="${v}" data-i="${i}" style="width:54px;padding:7px 4px;text-align:center;border-radius:8px;border:1px solid #33425a;background:#10141b;color:#eff3f8;font-size:.95rem">`).join('')+'<button class="btn sec sm" id="vRe">↺ 2·4·6·8·10</button>';
+  $$('#vIn input').forEach(inp=>inp.onchange=()=>{VV[+inp.dataset.i]=Math.max(-99,Math.min(999,+inp.value||0));vDraw();});$('#vRe').onclick=()=>{VV=[2,4,6,8,10];vDraw();};
+  const m=mean(VV),dev=VV.map(v=>v-m),sq=dev.map(d=>d*d),S=sq.reduce((s,v)=>s+v,0);
+  $('#vT').innerHTML=`<tr><th>값</th>${VV.map(v=>`<td>${v}</td>`).join('')}<th>합</th></tr><tr><th>편차</th>${dev.map(d=>`<td>${nf(d,2)}</td>`).join('')}<td class="hl">${nf(dev.reduce((s,v)=>s+v,0),2)}</td></tr><tr><th>편차²</th>${sq.map(d=>`<td>${nf(d,2)}</td>`).join('')}<td class="hl">${nf(S,2)}</td></tr>`;
+  $('#vN').textContent=`${nf(S,2)} ÷ 5 = ${nf(S/5,2)}`;$('#vN1').textContent=`${nf(S,2)} ÷ 4 = ${nf(S/4,2)}`;$('#vSd').textContent=nf(Math.sqrt(S/4),2);}
+$('#n1Go').onclick=()=>{const btn=$('#n1Go');btn.disabled=true;setTimeout(()=>{const g=gaussF(rng(Math.floor(Math.random()*1e9)));let a=0,b=0;const K=100000;for(let k=0;k<K;k++){const x=[g(),g(),g(),g(),g()];const m=(x[0]+x[1]+x[2]+x[3]+x[4])/5;let s=0;for(const v of x)s+=(v-m)**2;a+=s/5;b+=s/4;}a/=K;b/=K;btn.disabled=false;vib(20);
+  $('#n1Bars').innerHTML=[['÷ n (5)',a,'#ff9b5c'],['÷ (n−1) (4)',b,'#6fdc9a'],['진짜 분산',1,'#55667f']].map(([l,v,c])=>`<div class="d"><span>${l}</span><div class="bar" style="width:${v/1.1*100}%;background:${c}"></div><b>${v.toFixed(3)}</b></div>`).join('');
+  $('#n1Msg').innerHTML=`<div class="res g">n으로 나누면 평균 <b>${a.toFixed(2)}</b>로 진짜 값 1보다 <b>작게</b> 나옵니다. 표본 평균은 그 표본에 가장 가깝게 붙어 있어서 퍼짐이 실제보다 작게 계산되기 때문. n−1로 나누면 <b>${b.toFixed(2)}</b> — 치우침이 바로잡힙니다.</div>`;},30);};
+function nDraw(){const s=+$('#sdS').value;$('#sdV').textContent=s+' g';const k=5/s,p=erfc(k/Math.SQRT2);
+  $('#nK').textContent=`σ × ${nf(k,2)}`;$('#nP').textContent=p<1e-4?(p<1e-6?'백만분의 1 미만':(p*100).toExponential(1)+'%'):(p*100).toFixed(1)+'%';$('#nC').textContent=Math.round(p*1000)+'봉지';
+  const {c,w,h}=prep($('#cvN'),0.45);c.clearRect(0,0,w,h);const lo=60,hi=140,L=10,R=w-10,top=12,bot=h-22,X=v=>L+(v-lo)/(hi-lo)*(R-L);const pdf=x=>Math.exp(-(((x-100)/s)**2)/2);
+  c.fillStyle='rgba(111,220,154,.1)';c.fillRect(X(95),top,X(105)-X(95),bot-top);
+  c.beginPath();c.moveTo(X(lo),bot);for(let x=lo;x<=hi;x+=0.25)c.lineTo(X(x),bot-pdf(x)*(bot-top));c.lineTo(X(hi),bot);c.closePath();c.fillStyle='rgba(124,196,255,.25)';c.fill();
+  [[lo,95],[105,hi]].forEach(([a,b])=>{c.beginPath();c.moveTo(X(a),bot);for(let x=a;x<=b;x+=0.25)c.lineTo(X(x),bot-pdf(x)*(bot-top));c.lineTo(X(b),bot);c.closePath();c.fillStyle='rgba(255,125,125,.55)';c.fill();});
+  c.strokeStyle='#7cc4ff';c.lineWidth=2;c.beginPath();for(let x=lo;x<=hi;x+=0.25){const yy=bot-pdf(x)*(bot-top);x===lo?c.moveTo(X(x),yy):c.lineTo(X(x),yy);}c.stroke();
+  [70,95,100,105,130].forEach(t=>T(c,t+'',X(t),bot+12,t===95||t===105?'#6fdc9a':'#55667f',9.5));T(c,'기준 95~105 g',L+4,top+8,'#6fdc9a',10.5,'left');T(c,'(높이는 봉우리를 같게 맞춤)',w-8,top+8,'#55667f',9,'right');
+  $('#nMsg').innerHTML=s<=1?`<div class="res g">σ = ${s} g이면 기준 ±5 g이 <b>표준편차 ${nf(k,1)}배</b> — 벗어날 확률이 백만분의 일도 안 됩니다(1번 라인).</div>`:s>=10?`<div class="res r">σ = ${s} g이면 기준 ±5 g이 <b>표준편차의 ${nf(k,2)}배</b> — 약 <b>${(p*100).toFixed(0)}%</b>가 벗어납니다(2번 라인). 평균은 같아도 퍼짐이 열 배면 결과가 완전히 다르죠.</div>`:`<div class="say">평균은 <b>위치</b>를, 표준편차는 그 주변에서 <b>얼마나 흔들리는지</b>를 알려 줍니다. 품질과 위험을 볼 때 핵심!</div>`;}
+$('#sdS').addEventListener('input',nDraw);
+
+/* ===== ④ 첨도 ===== */
+let KU=null;
+$('#kuGo').onclick=()=>{const btn=$('#kuGo');btn.disabled=true;setTimeout(()=>{const g=gaussF(rng(Math.floor(Math.random()*1e9)));const N=1000000,sc=Math.sqrt(3/5);let z3=0,z4=0,t3=0,t4=0;const hz=new Array(120).fill(0),ht=new Array(120).fill(0);
+  const bin=(v,H)=>{const k=Math.floor((v+6)/0.1);if(k>=0&&k<120)H[k]++;};
+  for(let i=0;i<N;i++){const z=g();const a=Math.abs(z);if(a>3)z3++;if(a>4)z4++;bin(z,hz);let ch=0;for(let j=0;j<5;j++){const q=g();ch+=q*q;}const t=g()/Math.sqrt(ch/5)*sc,b=Math.abs(t);if(b>3)t3++;if(b>4)t4++;bin(t,ht);}
+  KU={z3:z3/N*100,z4:z4/N*100,t3:t3/N*100,t4:t4/N*100,hz,ht};btn.disabled=false;kuDraw();vib(20);},30);};
+function kuDraw(){const {c,w,h}=prep($('#cvK'),0.5);c.clearRect(0,0,w,h);if(!KU){T(c,'▶ 버튼을 눌러 실험',w/2,h/2,'#55667f',12);$('#kuT').innerHTML='<tr><th>벗어난 정도</th><th>정규분포</th><th>꼬리 두꺼운 분포</th><th>배수</th></tr><tr><td>|x| &gt; 3σ</td><td>0.27%</td><td>1.2%</td><td>약 4배</td></tr><tr><td>|x| &gt; 4σ</td><td>0.0059%</td><td>0.36%</td><td>약 60배</td></tr><tr><td colspan="4" style="color:#a3b0c2">원고의 실험값 — 버튼을 누르면 직접 다시 계산</td></tr>';return;}
+  const L=10,R=w-10,top=14,bot=h-22,X=v=>L+(v+6)/12*(R-L);const logy=v=>v<=0?bot:bot-(Math.log10(v)/Math.log10(60000))*(bot-top);
+  [[KU.hz,'#7cc4ff'],[KU.ht,'#ff9b5c']].forEach(([H,col])=>{c.strokeStyle=col;c.lineWidth=2;c.beginPath();let st=false;H.forEach((n,k)=>{const x=X(-6+(k+0.5)*0.1);if(n>0){st?c.lineTo(x,logy(n)):c.moveTo(x,logy(n));st=true;}});c.stroke();});
+  c.fillStyle='rgba(255,125,125,.08)';c.fillRect(L,top,X(-3)-L,bot-top);c.fillRect(X(3),top,R-X(3),bot-top);
+  [-4,-3,0,3,4].forEach(t=>T(c,t+'σ',X(t),bot+12,Math.abs(t)>=3?'#ff7d7d':'#55667f',9.5));T(c,'세로축: 개수(로그) — 꼬리를 크게 보기',L+2,top+2,'#55667f',9.5,'left');
+  T(c,'━ 정규',R,top+2,'#7cc4ff',10,'right');T(c,'━ 꼬리 두꺼움',R,top+16,'#ff9b5c',10,'right');
+  $('#kuT').innerHTML=`<tr><th>벗어난 정도</th><th>정규분포</th><th>꼬리 두꺼운 분포</th><th>배수</th></tr><tr><td>|x| &gt; 3σ</td><td>${KU.z3.toFixed(3)}%</td><td>${KU.t3.toFixed(2)}%</td><td class="hl">${(KU.t3/KU.z3).toFixed(1)}배</td></tr><tr><td>|x| &gt; 4σ</td><td>${KU.z4.toFixed(4)}%</td><td>${KU.t4.toFixed(3)}%</td><td class="hl">${KU.z4>0?Math.round(KU.t4/KU.z4)+'배':'—'}</td></tr>`;
+  $('#kuMsg').innerHTML='<div class="res y">평소엔 비슷해 보여도 <b>큰 사건이 훨씬 자주</b> 납니다 — 이것이 첨도가 재는 <b>꼬리의 무게</b>. 주가 폭락처럼 예상 밖의 큰 사건을 다룰 때 꼭 봅니다. 정규분포의 첨도는 3이라, 3을 뺀 <b>초과 첨도</b>로 0을 기준으로 보는 경우가 많아요. <span style="color:#a3b0c2">(꼬리 두꺼운 분포 = 자유도 5 t분포, 표준편차 1로 맞춤)</span></div>';}
+/* describe */
+function dsDraw(){if(!LN)lnMake();const st=a=>[a.length,mean(a),sdS(a),Math.min(...a),qnt(a,.25),qnt(a,.5),qnt(a,.75),Math.max(...a)];const A=st(LN[0]),B=st(LN[1]);const lab=['count','mean','std','min','25%','50%','75%','max'];
+  $('#dsT').innerHTML='<tr><th></th><th>1번 라인</th><th>2번 라인</th></tr>'+lab.map((l,i)=>`<tr><td class="mono">${l}</td><td>${i?nf(A[i],1):A[i]}</td><td class="${i===2||i===3||i===7?'hl':''}">${i?nf(B[i],1):B[i]}</td></tr>`).join('');
+  $('#dsMsg').innerHTML=`<div class="say">평균은 거의 같지만 <b>std</b>와 <b>min·max</b>만 봐도 2번 라인의 문제가 바로 보입니다. 이번 생산에서 2번 라인 불량 <b>${LN[1].filter(v=>v<95||v>105).length}봉지</b>. <span style="color:#a3b0c2">(원고의 한 번 실행: 평균 99.9 · 100.3, 표준편차 1.0 · 10.3, 최솟값 96.5 · 70.9, 불량 635봉지)</span></div>`;}
+$('#dsGo').onclick=()=>{lnMake();dsDraw();lnDraw();vib(15);};
+
+/* 나의 예 */
+const MK='beyondmean.mine';let mine=[];try{mine=JSON.parse(localStorage.getItem(MK)||'[]');if(!Array.isArray(mine))mine=[];}catch(e){mine=[];}
+const saveM=()=>{try{localStorage.setItem(MK,JSON.stringify(mine));}catch(e){}};
+function drawMine(){$('#mine').innerHTML=mine.length?mine.map((m,i)=>`<div><span>📰 ${esc(m)}</span><button data-d="${i}" aria-label="지우기">✕</button></div>`).join(''):'<p class="note">예: 평균 연봉, 평균 집값, 평균 대기 시간…</p>';
+  $$('#mine button').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.d,1);saveM();drawMine();});}
+$('#myAdd').onclick=()=>{const v=$('#myIn').value.trim();if(!v)return;mine.unshift(v);mine=mine.slice(0,30);saveM();$('#myIn').value='';drawMine();toast('숨은 분포 하나 상상 완료!');};
+$('#myIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#myAdd').click();});
+
+/* 탭 */
+function redraw(){if(!$('#tab-t1').hidden){lnDraw();mDraw();zDraw();}if(!$('#tab-t2').hidden){if(!HD)hMake();hDraw();}if(!$('#tab-t3').hidden){rDraw();nDraw();}if(!$('#tab-t4').hidden){kuDraw();dsDraw();}}
+function show(t){$$('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===t));['t1','t2','t3','t4'].forEach(k=>$('#tab-'+k).hidden=k!==t);redraw();window.scrollTo(0,0);}
+$$('.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(redraw,120);});
+lnMake();lnDraw();mDraw();zDraw();vDraw();drawMine();
+})();
+</script>
+</body>
+</html>
